@@ -3,12 +3,15 @@ const mongoose = require('mongoose');
 const config = require('config');
 const authRouter = require('./routes/auth.routes.js');
 const app = express();
-const PORT = config.get('serverPort');
+const PORT = process.env.PORT || config.get('serverPort');
 const corsMiddleware = require('./middleWares/cors.middleware.js');
 const fileRouter = require('./routes/file.routes.js');
 const fileUpload = require('express-fileupload');
+const filePathMiddleware = require('./middleWares/filepath.middleWare.js');
+const path = require('path')
 
 app.use(corsMiddleware);
+app.use(filePathMiddleware(path.resolve(__dirname, 'files')));
 app.use(express.json());
 app.use(fileUpload({}));
 app.use(express.static('static'));

@@ -4,6 +4,7 @@ const File = require('../models/File.js');
 const config = require('config');
 const fs = require('fs');
 const uuid = require('uuid');
+const path = require('path');
 
 class FileController {
     async createDir(req, res) {
@@ -13,10 +14,10 @@ class FileController {
             const parentFile = await File.findOne({ _id: parent });
             if (!parentFile) {
                 file.path = name;
-                await fileService.createDir(file);
+                await fileService.createDir(req, file);
             } else {
                 file.path = `${parentFile.path}\\${file.name}`;
-                await fileService.createDir(file);
+                await fileService.createDir(req, file);
                 parentFile.childs.push(file._id);
                 await parentFile.save();
             }
@@ -65,10 +66,10 @@ class FileController {
             let path;
 
             if (parent) {
-                path = `${config.get('filePath')}\\${user.id}\\${parent.path}\\${file.name}`;
+                path = `${req.filePath}\\${user.id}\\${parent.path}\\${file.name}`;
                 parent.size = parent.size + file.size;
             } else {
-                path = `${config.get('filePath')}\\${user.id}\\${file.name}`;
+                path = `${req.filePath}\\${user.id}\\${file.name}`;
             }
 
             if (fs.existsSync(path)) {
@@ -90,12 +91,15 @@ class FileController {
                 type,
                 size: file.size,
                 path: filePath,
-                parent: parent?.id,
+                parent: parent ? parent.id : null,
                 user: user._id
             })
 
             await dbFile.save();
-            await parent.save();
+            if (parent) {
+                await parent.save();
+            }
+            
 
             res.json(dbFile);
 
@@ -109,7 +113,6 @@ class FileController {
         try {
             const file = await File.findOne({ _id: req.query.id, user: req.user.id });
             const path = config.get('filePath') + '\\' + req.user.id + '\\' + file.path
-            //  + '\\' + file.name;
 
             if (fs.existsSync(path)) {
                 return res.download(path, file.name);
@@ -130,7 +133,7 @@ class FileController {
                 res.status(400).json({ message: 'Файл не найден' })
             }
 
-            fileService.deleteFile(file);
+            fileService.deleteFile(req, file);
             await file.remove();
             return res.status(200).json({ message: 'Файл удален' })
         } catch (e) {
@@ -157,8 +160,8 @@ class FileController {
         try {
             const file = req.files.file;
             const user = await User.findById(req.user.id);
-            const avatarName = uuid.v4() + '.jpg';
-            file.mv(config.get('staticPath') + '\\' + avatarName);
+            const avatarName = uuid.v4() + '.jpg' || uuid.v4() + '.jpeg' || uuid.v4() + '.png' || uuid.v4() + '.svg';
+            file.mv(path.resolve(__dirname, '..', 'static' ) + '\\' + avatarName);
             user.avatar = avatarName;
             await user.save();
             return res.json(user);

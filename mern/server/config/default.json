@@ -1,0 +1,8 @@
+{
+    "serverPort": 3000,
+    "dbURL": "mongodb+srv://Alex:550778RuS@cluster0.rqdwspn.mongodb.net/cloud-disk?retryWrites=true&w=majority",
+    "secretKey": "mysecretkey",
+    "filePath": "C:\\Users\\Alex\\Desktop\\фриланс\\MERN\\server\\files",
+    "staticPath": "C:\\Users\\Alex\\Desktop\\фриланс\\MERN\\server\\static"
+
+}
